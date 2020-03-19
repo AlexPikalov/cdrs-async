@@ -1,12 +1,7 @@
-use std::cell::RefCell;
-
 use async_trait::async_trait;
-
-use crate::transport::CDRSTransport;
-use crate::{GetCompressor, GetTransport};
 use cassandra_proto::{
   error,
-  frame::{Flag, Frame, IntoBytes},
+  frame::Frame,
   query::{QueryParams, QueryParamsBuilder, QueryValues},
   types::CBytesShort,
 };
@@ -21,9 +16,7 @@ pub trait ExecExecutor {
     query_parameters: QueryParams,
     with_tracing: bool,
     with_warnings: bool,
-  ) -> error::Result<Frame> {
-    unimplemented!();
-  }
+  ) -> error::Result<Frame>;
 
   async fn exec_with_params(
     &self,

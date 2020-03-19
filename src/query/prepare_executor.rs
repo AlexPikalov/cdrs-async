@@ -1,14 +1,6 @@
-use std::cell::RefCell;
-
 use async_trait::async_trait;
 
-use crate::transport::CDRSTransport;
-use crate::{GetCompressor, GetTransport};
-use cassandra_proto::{
-  error,
-  frame::{Flag, Frame, IntoBytes},
-  types::CBytesShort,
-};
+use cassandra_proto::{error, types::CBytesShort};
 
 pub type PreparedQuery = CBytesShort;
 
@@ -22,9 +14,7 @@ pub trait PrepareExecutor {
     query: Q,
     with_tracing: bool,
     with_warnings: bool,
-  ) -> error::Result<PreparedQuery> {
-    unimplemented!();
-  }
+  ) -> error::Result<PreparedQuery>;
 
   /// It prepares query without additional tracing information and warnings.
   async fn prepare<Q: ToString + Send>(&self, query: Q) -> error::Result<PreparedQuery> {

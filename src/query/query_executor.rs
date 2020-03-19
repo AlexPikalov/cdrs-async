@@ -1,41 +1,35 @@
-use std::sync::Arc;
-
-use async_std::prelude::*;
+use async_std::pin::Pin;
 use async_trait::async_trait;
-use futures::FutureExt;
-
-use crate::transport::CDRSTransport;
-use crate::{GetCompressor, GetTransport};
 use cassandra_proto::{
   error,
-  frame::{Flag, Frame, IntoBytes},
-  query::{Query, QueryParams, QueryParamsBuilder, QueryValues},
+  frame::Frame,
+  query::{QueryParams, QueryParamsBuilder, QueryValues},
 };
 
+use crate::compressor::Compression;
+
 #[async_trait]
-pub trait QueryExecutor {
+pub trait QueryExecutor: Send {
   async fn query_with_params_tw<Q: ToString + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     query: Q,
     query_params: QueryParams,
     with_tracing: bool,
     with_warnings: bool,
-  ) -> error::Result<Frame> {
-    // build query
-    //
-    unimplemented!()
-  }
+  ) -> error::Result<Frame>;
+
+  fn get_compression(self: Pin<&mut Self>) -> Compression;
 
   /// Executes a query with default parameters:
   /// * TDB
-  async fn query<Q: ToString + Send>(&self, query: Q) -> error::Result<Frame> {
+  async fn query<Q: ToString + Send>(mut self: Pin<&mut Self>, query: Q) -> error::Result<Frame> {
     self.query_tw(query, false, false).await
   }
 
   /// Executes a query with ability to trace it and see warnings, and default parameters:
   /// * TBD
   async fn query_tw<Q: ToString + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     query: Q,
     with_tracing: bool,
     with_warnings: bool,
@@ -48,7 +42,7 @@ pub trait QueryExecutor {
 
   /// Executes a query with bounded values (either with or without names).
   async fn query_with_values<Q: ToString + Send, V: Into<QueryValues> + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     query: Q,
     values: V,
   ) -> error::Result<Frame> {
@@ -58,7 +52,7 @@ pub trait QueryExecutor {
   /// Executes a query with bounded values (either with or without names)
   /// and ability to see warnings, trace a request and default parameters.
   async fn query_with_values_tw<Q: ToString + Send, V: Into<QueryValues> + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     query: Q,
     values: V,
     with_tracing: bool,
@@ -73,7 +67,7 @@ pub trait QueryExecutor {
 
   /// Executes a query with query params without warnings and tracing.
   async fn query_with_params<Q: ToString + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     query: Q,
     query_params: QueryParams,
   ) -> error::Result<Frame> {

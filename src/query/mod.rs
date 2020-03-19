@@ -15,3 +15,9 @@ pub use query_executor::QueryExecutor;
 pub use query_flags::QueryFlags;
 pub use query_params::QueryParams;
 pub use query_values::QueryValues;
+
+use crate::compressor::Compression;
+
+pub(crate) trait GetCompression {
+  fn get_compression(&self) -> &Compression;
+}
