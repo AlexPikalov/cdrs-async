@@ -11,7 +11,7 @@ use futures::stream::Stream;
 use cassandra_proto::{
   error,
   frame::{parser_async::convert_frame_into_result, Frame, IntoBytes, Opcode},
-  query::{Query, QueryParams},
+  query::{Query, QueryBatch, QueryParams},
 };
 
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
   authenticators::{Authenticator, NoneAuthenticator},
   compressor::Compression,
   frame_channel::FrameChannel,
-  query::{ExecExecutor, PrepareExecutor, PreparedQuery, QueryExecutor},
+  query::{BatchExecutor, ExecExecutor, PrepareExecutor, PreparedQuery, QueryExecutor},
   transport_tcp::TransportTcp,
   utils::prepare_flags,
 };
@@ -214,6 +214,23 @@ impl ExecExecutor for Session {
     let stream = executor_frame.stream;
 
     self.channel.write(&executor_frame.into_cbytes()).await?;
+    receive_frame!(self, stream).await
+  }
+}
+
+#[async_trait]
+impl BatchExecutor for Session {
+  async fn batch_with_params_tw(
+    mut self: Pin<&mut Self>,
+    batch: QueryBatch,
+    with_tracing: bool,
+    with_warnings: bool,
+  ) -> error::Result<Frame> {
+    let flags = prepare_flags(with_tracing, with_warnings);
+    let batch_frame = Frame::new_req_batch(batch, flags);
+    let stream = batch_frame.stream;
+
+    self.channel.write(&batch_frame.into_cbytes()).await?;
     receive_frame!(self, stream).await
   }
 }
