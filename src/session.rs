@@ -19,7 +19,7 @@ use crate::{
   authenticators::{Authenticator, NoneAuthenticator},
   compressor::Compression,
   frame_channel::FrameChannel,
-  query::QueryExecutor,
+  query::{PrepareExecutor, PreparedQuery, QueryExecutor},
   transport_tcp::TransportTcp,
   utils::prepare_flags,
 };
@@ -169,5 +169,33 @@ impl QueryExecutor for Session {
     // send frame
     self.channel.write(&query_frame.into_cbytes()).await?;
     receive_frame!(self, stream).await
+  }
+}
+
+#[async_trait]
+impl PrepareExecutor for Session {
+  async fn prepare_tw<Q: ToString + Send>(
+    mut self: Pin<&mut Self>,
+    query: Q,
+    with_tracing: bool,
+    with_warnings: bool,
+  ) -> error::Result<PreparedQuery> {
+    let flags = prepare_flags(with_tracing, with_warnings);
+
+    let query_frame = Frame::new_req_prepare(query.to_string(), flags);
+    let stream = query_frame.stream;
+
+    self.channel.write(&query_frame.into_cbytes()).await?;
+
+    let prepared_id = receive_frame!(self, stream)
+      .await?
+      .get_body()?
+      .into_prepared()
+      .ok_or(error::Error::from(
+        "Cannot get prepared query ID from a response",
+      ))?
+      .id;
+
+    Ok(prepared_id)
   }
 }

@@ -1,3 +1,4 @@
+use async_std::pin::Pin;
 use async_trait::async_trait;
 
 use cassandra_proto::{error, types::CBytesShort};
@@ -10,14 +11,17 @@ pub trait PrepareExecutor {
   /// the method takes `with_tracing` and `with_warnings` flags
   /// to get tracing information and warnings.
   async fn prepare_tw<Q: ToString + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     query: Q,
     with_tracing: bool,
     with_warnings: bool,
   ) -> error::Result<PreparedQuery>;
 
   /// It prepares query without additional tracing information and warnings.
-  async fn prepare<Q: ToString + Send>(&self, query: Q) -> error::Result<PreparedQuery> {
+  async fn prepare<Q: ToString + Send>(
+    mut self: Pin<&mut Self>,
+    query: Q,
+  ) -> error::Result<PreparedQuery> {
     self.prepare_tw(query, false, false).await
   }
 }
