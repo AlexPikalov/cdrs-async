@@ -6,8 +6,6 @@ use cassandra_proto::{
   query::{QueryParams, QueryParamsBuilder, QueryValues},
 };
 
-use crate::compressor::Compression;
-
 #[async_trait]
 pub trait QueryExecutor: Send {
   async fn query_with_params_tw<Q: ToString + Send>(
@@ -17,8 +15,6 @@ pub trait QueryExecutor: Send {
     with_tracing: bool,
     with_warnings: bool,
   ) -> error::Result<Frame>;
-
-  fn get_compression(self: Pin<&mut Self>) -> Compression;
 
   /// Executes a query with default parameters:
   /// * TDB

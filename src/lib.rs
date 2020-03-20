@@ -2,6 +2,7 @@ extern crate async_std;
 extern crate async_trait;
 extern crate cassandra_proto;
 extern crate futures;
+extern crate log;
 extern crate lz4_compress;
 extern crate snap;
 

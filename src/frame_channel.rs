@@ -1,14 +1,17 @@
 use std::io;
 use std::pin::Pin;
 
-use crate::async_std::io::{IoSlice, Write};
-use crate::async_std::prelude::*;
+use async_std::{
+  io::{IoSlice, Write},
+  prelude::*,
+};
 use cassandra_proto::frame::{parser_async::parse_frame_async, Frame, IntoBytes};
 use futures::{
   sink::Sink,
   stream::Stream,
   task::{Context, Poll},
 };
+use log::error;
 
 use crate::{compressor::Compression, transport::CDRSTransport};
 
@@ -102,40 +105,32 @@ impl<T: CDRSTransport> Stream for FrameChannel<T> {
     let transport = Pin::new(&mut self.transport);
     let mut buffer_slice = [0u8; READING_BUFFER_SIZE];
 
-    println!(">> poll_next");
-
     match transport.poll_read(cx, &mut buffer_slice) {
       Poll::Ready(result) => match result {
         Ok(n) => {
-          println!("poll_read {} bytes", n);
-          if n == READING_BUFFER_SIZE {
+          self.receving_buffer.extend_from_slice(&buffer_slice[0..n]);
+          if n == READING_BUFFER_SIZE || n == 0 {
             return Poll::Pending;
           } else {
             // n < READING_BUFFER_SIZE means the function can proceed further
           }
         }
         Err(err) => {
-          println!("poll_read error {:?} bytes", err);
-          // TODO: log error
+          error!("CDRS frame_channel: {:?}", err);
           self.is_terminated = true;
           return Poll::Ready(None);
         }
       },
       Poll::Pending => {
-        println!("poll_read still pending");
         return Poll::Pending;
       }
     }
-
-    println!("adding {} bytes to the buffer", buffer_slice.len());
-    self.receving_buffer.extend_from_slice(&buffer_slice);
 
     let mut buffer_cursor = io::Cursor::new(&mut self.receving_buffer);
 
     match parse_frame_async(&mut buffer_cursor, &compressor) {
       Err(err) => {
-        // TODO: log error
-        println!("ERROR parse frame async: {:?}", err);
+        error!("CDRS frame_channel: parse frame error {:?}", err);
         self.is_terminated = true;
         return Poll::Ready(None);
       }
@@ -148,7 +143,6 @@ impl<T: CDRSTransport> Stream for FrameChannel<T> {
         return Poll::Ready(Some(frame));
       }
       Ok(None) => {
-        println!("None from parse frame async");
         return Poll::Pending;
       }
     }

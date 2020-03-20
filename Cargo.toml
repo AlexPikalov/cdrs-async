@@ -8,9 +8,10 @@ edition = "2018"
 
 [dependencies]
 async-std = { version = "1.4.0", features = ["unstable"] }
-# cassandra-proto = "0.1"
-cassandra-proto = { path = "../cassandra-proto" }
+cassandra-proto = "0.1.2"
+# cassandra-proto = { path = "../cassandra-proto" }
 futures = {version = "0.3.1", features = ["thread-pool"]}
 lz4-compress = "=0.1.0"
 snap = "0.2.3"
 async-trait = "0.1.21"
+log = "0.4"

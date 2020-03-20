@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io;
 
 use async_std::future::poll_fn;
 use async_std::pin::Pin;
@@ -9,39 +10,146 @@ use futures::stream::Stream;
 
 use cassandra_proto::{
   error,
-  frame::{parser_async::convert_frame_into_result, Frame, IntoBytes},
+  frame::{parser_async::convert_frame_into_result, Frame, IntoBytes, Opcode},
   query::{Query, QueryParams},
 };
 
 use crate::{
-  async_trait::async_trait, compressor::Compression, frame_channel::FrameChannel,
-  query::QueryExecutor, transport_tcp::TransportTcp, utils::prepare_flags,
+  async_trait::async_trait,
+  authenticators::{Authenticator, NoneAuthenticator},
+  compressor::Compression,
+  frame_channel::FrameChannel,
+  query::QueryExecutor,
+  transport_tcp::TransportTcp,
+  utils::prepare_flags,
 };
 
 type StreamId = u16;
 
 pub struct Session {
   channel: FrameChannel<TransportTcp>,
-  compressor: Compression,
   responses: HashMap<StreamId, Frame>,
+  authenticator: NoneAuthenticator,
 }
 
-impl From<TransportTcp> for Session {
-  fn from(transport: TransportTcp) -> Session {
-    Session {
-      channel: FrameChannel::new(transport, Compression::None),
-      compressor: Compression::None,
-      responses: HashMap::new(),
+macro_rules! receive_frame {
+  ($this: expr, $stream_id: expr) => {
+    poll_fn(|cx: &mut Context| {
+      if let Some(response) = $this.responses.remove(&$stream_id) {
+        return Poll::Ready(convert_frame_into_result(response));
+      }
+
+      match Pin::new(&mut $this.channel).poll_next(cx) {
+        Poll::Ready(Some(frame)) => {
+          if frame.stream == $stream_id {
+            return Poll::Ready(convert_frame_into_result(frame));
+          } else {
+            $this.responses.insert(frame.stream, frame);
+            return Poll::Pending;
+          }
+        }
+        Poll::Ready(None) => Poll::Ready(Err("stream was terminated".into())),
+        Poll::Pending => Poll::Pending,
+      }
+    })
+  };
+}
+
+impl Session {
+  pub async fn connect<Addr: ToString>(
+    addr: Addr,
+    compressor: Compression,
+    authenticator: NoneAuthenticator,
+  ) -> error::Result<Self> {
+    let transport = TransportTcp::new(&addr.to_string()).await?;
+    let channel = FrameChannel::new(transport, compressor);
+    let responses = HashMap::new();
+
+    let mut session = Session {
+      channel,
+      responses,
+      authenticator,
+    };
+
+    session.startup().await?;
+
+    Ok(session)
+  }
+
+  async fn startup(&mut self) -> error::Result<()> {
+    let ref mut compression = Compression::None;
+    let startup_frame = Frame::new_req_startup(compression.as_str());
+    let stream = startup_frame.stream;
+
+    self.channel.write(&startup_frame.into_cbytes()).await?;
+    let start_response = receive_frame!(self, stream).await?;
+
+    if start_response.opcode == Opcode::Ready {
+      return Ok(());
     }
+
+    if start_response.opcode == Opcode::Authenticate {
+      let body = start_response.get_body()?;
+      let authenticator = body.get_authenticator().expect(
+        "Cassandra Server did communicate that it neededs
+                authentication but the auth schema was missing in the body response",
+      );
+
+      // This creates a new scope; avoiding a clone
+      // and we check whether
+      // 1. any authenticators has been passed in by client and if not send error back
+      // 2. authenticator is provided by the client and `auth_scheme` presented by
+      //      the server and client are same if not send error back
+      // 3. if it falls through it means the preliminary conditions are true
+
+      let auth_check = self
+        .authenticator
+        .get_cassandra_name()
+        .ok_or(error::Error::General(
+          "No authenticator was provided".to_string(),
+        ))
+        .map(|auth| {
+          if authenticator != auth {
+            let io_err = io::Error::new(
+              io::ErrorKind::NotFound,
+              format!(
+                "Unsupported type of authenticator. {:?} got,
+                             but {} is supported.",
+                authenticator, auth
+              ),
+            );
+            return Err(error::Error::Io(io_err));
+          }
+          Ok(())
+        });
+
+      if let Err(err) = auth_check {
+        return Err(err);
+      }
+
+      let auth_token_bytes =
+        self
+          .authenticator
+          .get_auth_token()
+          .into_plain()
+          .ok_or(error::Error::from(
+            "Authentication error: cannot get auth tocken",
+          ))?;
+      let auth_response = Frame::new_req_auth_response(auth_token_bytes);
+      let response_stream = auth_response.stream;
+
+      self.channel.write(&auth_response.into_cbytes()).await?;
+      receive_frame!(self, response_stream).await?;
+
+      return Ok(());
+    }
+
+    unreachable!();
   }
 }
 
 #[async_trait]
 impl QueryExecutor for Session {
-  fn get_compression(self: Pin<&mut Self>) -> Compression {
-    self.compressor
-  }
-
   async fn query_with_params_tw<Q: ToString + Send>(
     mut self: Pin<&mut Self>,
     query: Q,
@@ -60,50 +168,6 @@ impl QueryExecutor for Session {
 
     // send frame
     self.channel.write(&query_frame.into_cbytes()).await?;
-
-    println!("stream id {:?}", stream);
-
-    // TODO: return a Future that will
-    // * inspect self.responses on poll and try to find a response with a given stream id
-    // * if not found call.channel.next() and check stream id of a given frame
-    // * if stream didn't match save into self.responses
-
-    poll_fn(|cx: &mut Context| {
-      println!("polling response");
-      if let Some(response) = self.responses.remove(&stream) {
-        return Poll::Ready(convert_frame_into_result(response));
-      }
-
-      match Pin::new(&mut self.channel).poll_next(cx) {
-        Poll::Ready(Some(frame)) => {
-          if frame.stream == stream {
-            return Poll::Ready(convert_frame_into_result(frame));
-          } else {
-            self.responses.insert(frame.stream, frame);
-            return Poll::Pending;
-          }
-        }
-        Poll::Ready(None) => Poll::Ready(Err("stream was terminated".into())),
-        Poll::Pending => Poll::Pending,
-      }
-    })
-    .await
-
-    // if let Some(frame) = self.channel.next().await {
-    //   let received_stream_id = frame.stream;
-    //   todo!();
-    //   // self.responses.insert(stream_id, frame);
-    // }
-
-    // receive all available frames and find the one that matches the stream
-
-    // loop {
-    // parse_frame_async(&mut self.transport, &compressor);
-    // match parse_frame_async(&mut self.transport, &compressor) {
-    //   // Poll::Ready(_) => {}
-    // }
-    // }
-
-    // todo!()
+    receive_frame!(self, stream).await
   }
 }
