@@ -1,8 +1,17 @@
 use cassandra_proto::types::CBytes;
 
-pub trait Authenticator: Clone + Send + Sync {
-  fn get_auth_token(&self) -> CBytes;
-  fn get_cassandra_name(&self) -> Option<&str>;
+pub struct Authenticator {
+  cassandra_name: Option<String>,
+  auth_token: CBytes,
+}
+
+impl Authenticator {
+  pub fn get_auth_token(&self) -> CBytes {
+    self.auth_token.clone()
+  }
+  pub fn get_cassandra_name(&self) -> Option<String> {
+    self.cassandra_name.clone()
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -20,31 +29,33 @@ impl PasswordAuthenticator {
   }
 }
 
-impl Authenticator for PasswordAuthenticator {
-  fn get_auth_token(&self) -> CBytes {
-    let mut token = vec![0];
-    token.extend_from_slice(self.username.as_bytes());
-    token.push(0);
-    token.extend_from_slice(self.password.as_bytes());
+impl Into<Authenticator> for PasswordAuthenticator {
+  fn into(self) -> Authenticator {
+    let auth_token = {
+      let mut v = vec![0];
+      v.extend_from_slice(self.username.as_bytes());
+      v.push(0);
+      v.extend_from_slice(self.password.as_bytes());
 
-    CBytes::new(token)
-  }
+      CBytes::new(v)
+    };
 
-  fn get_cassandra_name(&self) -> Option<&str> {
-    Some("org.apache.cassandra.auth.PasswordAuthenticator")
+    Authenticator {
+      cassandra_name: Some("org.apache.cassandra.auth.PasswordAuthenticator".into()),
+      auth_token,
+    }
   }
 }
 
 #[derive(Debug, Clone)]
 pub struct NoneAuthenticator;
 
-impl Authenticator for NoneAuthenticator {
-  fn get_auth_token(&self) -> CBytes {
-    CBytes::new(vec![0])
-  }
-
-  fn get_cassandra_name(&self) -> Option<&str> {
-    None
+impl Into<Authenticator> for NoneAuthenticator {
+  fn into(self) -> Authenticator {
+    Authenticator {
+      cassandra_name: None,
+      auth_token: CBytes::new(vec![0]),
+    }
   }
 }
 
@@ -55,7 +66,7 @@ mod tests {
   #[test]
   fn test_password_authenticator_trait_impl() {
     let authenticator = PasswordAuthenticator::new("a", "a");
-    let _ = authenticator_tester(Box::new(authenticator));
+    let _ = authenticator_tester(Box::new(authenticator.into()));
   }
 
   #[test]
@@ -65,16 +76,16 @@ mod tests {
 
   #[test]
   fn test_password_authenticator_get_cassandra_name() {
-    let auth = PasswordAuthenticator::new("foo", "bar");
+    let auth: Authenticator = PasswordAuthenticator::new("foo", "bar").into();
     assert_eq!(
       auth.get_cassandra_name(),
-      Some("org.apache.cassandra.auth.PasswordAuthenticator")
+      Some("org.apache.cassandra.auth.PasswordAuthenticator".into())
     );
   }
 
   #[test]
   fn test_password_authenticator_get_auth_token() {
-    let auth = PasswordAuthenticator::new("foo", "bar");
+    let auth: Authenticator = PasswordAuthenticator::new("foo", "bar").into();
     let mut expected_token = vec![0];
     expected_token.extend_from_slice("foo".as_bytes());
     expected_token.push(0);
@@ -85,10 +96,10 @@ mod tests {
 
   #[test]
   fn test_authenticator_none_get_cassandra_name() {
-    let auth = NoneAuthenticator;
+    let auth: Authenticator = (NoneAuthenticator {}).into();
     assert_eq!(auth.get_cassandra_name(), None);
     assert_eq!(auth.get_auth_token().into_plain().unwrap(), vec![0]);
   }
 
-  fn authenticator_tester<A: Authenticator>(_authenticator: Box<A>) {}
+  fn authenticator_tester(_authenticator: Box<Authenticator>) {}
 }

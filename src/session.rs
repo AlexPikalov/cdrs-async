@@ -29,7 +29,7 @@ type StreamId = u16;
 pub struct Session {
   channel: FrameChannel<TransportTcp>,
   responses: HashMap<StreamId, Frame>,
-  authenticator: NoneAuthenticator,
+  authenticator: Authenticator,
 }
 
 macro_rules! receive_frame {
@@ -59,7 +59,7 @@ impl Session {
   pub async fn connect<Addr: ToString>(
     addr: Addr,
     compressor: Compression,
-    authenticator: NoneAuthenticator,
+    authenticator: Authenticator,
   ) -> error::Result<Self> {
     let transport = TransportTcp::new(&addr.to_string()).await?;
     let channel = FrameChannel::new(transport, compressor);
