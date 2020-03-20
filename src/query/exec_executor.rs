@@ -1,3 +1,4 @@
+use async_std::pin::Pin;
 use async_trait::async_trait;
 use cassandra_proto::{
   error,
@@ -9,9 +10,9 @@ use cassandra_proto::{
 pub type PreparedQuery = CBytesShort;
 
 #[async_trait]
-pub trait ExecExecutor {
+pub trait ExecExecutor: Send {
   async fn exec_with_params_tw(
-    &self,
+    mut self: Pin<&mut Self>,
     prepared: &PreparedQuery,
     query_parameters: QueryParams,
     with_tracing: bool,
@@ -19,7 +20,7 @@ pub trait ExecExecutor {
   ) -> error::Result<Frame>;
 
   async fn exec_with_params(
-    &self,
+    mut self: Pin<&mut Self>,
     prepared: &PreparedQuery,
     query_parameters: QueryParams,
   ) -> error::Result<Frame> {
@@ -29,7 +30,7 @@ pub trait ExecExecutor {
   }
 
   async fn exec_with_values_tw<V: Into<QueryValues> + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     prepared: &PreparedQuery,
     values: V,
     with_tracing: bool,
@@ -43,7 +44,7 @@ pub trait ExecExecutor {
   }
 
   async fn exec_with_values<V: Into<QueryValues> + Send>(
-    &self,
+    mut self: Pin<&mut Self>,
     prepared: &PreparedQuery,
     values: V,
   ) -> error::Result<Frame> {
@@ -53,7 +54,7 @@ pub trait ExecExecutor {
   }
 
   async fn exec_tw(
-    &self,
+    mut self: Pin<&mut Self>,
     prepared: &PreparedQuery,
     with_tracing: bool,
     with_warnings: bool,
@@ -64,7 +65,7 @@ pub trait ExecExecutor {
       .await
   }
 
-  async fn exec(&self, prepared: &PreparedQuery) -> error::Result<Frame> {
+  async fn exec(mut self: Pin<&mut Self>, prepared: &PreparedQuery) -> error::Result<Frame> {
     self.exec_tw(prepared, false, false).await
   }
 }

@@ -19,7 +19,7 @@ use crate::{
   authenticators::{Authenticator, NoneAuthenticator},
   compressor::Compression,
   frame_channel::FrameChannel,
-  query::{PrepareExecutor, PreparedQuery, QueryExecutor},
+  query::{ExecExecutor, PrepareExecutor, PreparedQuery, QueryExecutor},
   transport_tcp::TransportTcp,
   utils::prepare_flags,
 };
@@ -197,5 +197,23 @@ impl PrepareExecutor for Session {
       .id;
 
     Ok(prepared_id)
+  }
+}
+
+#[async_trait]
+impl ExecExecutor for Session {
+  async fn exec_with_params_tw(
+    mut self: Pin<&mut Self>,
+    prepared: &PreparedQuery,
+    query_parameters: QueryParams,
+    with_tracing: bool,
+    with_warnings: bool,
+  ) -> error::Result<Frame> {
+    let flags = prepare_flags(with_tracing, with_warnings);
+    let executor_frame = Frame::new_req_execute(prepared, query_parameters, flags);
+    let stream = executor_frame.stream;
+
+    self.channel.write(&executor_frame.into_cbytes()).await?;
+    receive_frame!(self, stream).await
   }
 }
