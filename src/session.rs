@@ -16,7 +16,7 @@ use cassandra_proto::{
 
 use crate::{
   async_trait::async_trait,
-  authenticators::{Authenticator, NoneAuthenticator},
+  authenticators::Authenticator,
   compressor::Compression,
   frame_channel::FrameChannel,
   query::{BatchExecutor, ExecExecutor, PrepareExecutor, PreparedQuery, QueryExecutor},

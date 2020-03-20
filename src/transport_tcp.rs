@@ -103,19 +103,3 @@ impl CDRSTransport for TransportTcp {
     self.tcp.peer_addr().is_ok()
   }
 }
-
-pub struct TcpTransportBuilder {
-  addr: String,
-}
-
-impl TcpTransportBuilder {
-  pub fn new(addr: String) -> Self {
-    TcpTransportBuilder { addr }
-  }
-}
-
-// impl CDRSTransportBuilder<TransportTcp> for TcpTransportBuilder {
-//   fn create(&self) -> io::Result<TransportTcp> {
-//     TransportTcp::new(self.addr.as_str())
-//   }
-// }

@@ -14,7 +14,6 @@ pub(crate) mod frame_channel;
 mod compressor;
 mod get_compressor_trait;
 mod get_transport_trait;
-// mod server_resp;
 mod session;
 mod transport;
 mod transport_builder_trait;
@@ -22,18 +21,7 @@ mod transport_tcp;
 mod utils;
 
 pub use compressor::Compression;
-// pub(crate) use get_compressor_trait::GetCompressor;
-// pub(crate) use get_transport_trait::GetTransport;
-// pub use server_resp::ServerResp;
 pub use session::Session;
 pub use transport::CDRSTransport;
 pub use transport_builder_trait::CDRSTransportBuilder;
-pub use transport_tcp::{TcpTransportBuilder, TransportTcp};
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub use transport_tcp::TransportTcp;
