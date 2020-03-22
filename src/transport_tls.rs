@@ -17,7 +17,7 @@ use super::transport::CDRSTransport;
 
 pub type Stream = TlsStream<net::TcpStream>;
 
-/// Default Tls transport.
+/// CDRS TLS transport.
 pub struct TransportTls {
   stream: Stream,
   _addr: String,

@@ -5,7 +5,10 @@ use {
 
 use async_std::io::{Read, Write};
 
-// TODO [v 2.x.x]: CDRSTransport: ... + BufReader + ButWriter + ...
+/// Generic transport trait which is implemented by transports provided by CDRS.
+///
+/// It requires that implementor had following traits implementations: `Sized`,
+/// `Send`, `Unpin`, async `Read` and `Write`.
 #[async_trait]
 pub trait CDRSTransport: Sized + Read + Write + Send + Sync + Unpin {
   // TODO: uncomment it

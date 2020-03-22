@@ -7,8 +7,10 @@ use cassandra_proto::{
   types::CBytesShort,
 };
 
+/// Prepared query ID.
 pub type PreparedQuery = CBytesShort;
 
+/// Traits that provides methods for prepared query execution.
 #[async_trait]
 pub trait ExecExecutor: Send {
   async fn exec_with_params_tw(

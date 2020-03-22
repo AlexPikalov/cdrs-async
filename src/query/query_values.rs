@@ -2,12 +2,14 @@ use std::{collections::HashMap, hash::Hash};
 
 use cassandra_proto::{frame::IntoBytes, types::value::Value, types::CString};
 
-/// Enum that represents two types of query values:
-/// * values without name
-/// * values with names
+/// Enum that represents named and simple query values.
 #[derive(Debug, Clone)]
 pub enum QueryValues {
+  /// Simple query values. During query exectuion a DB sever will use
+  /// such values one-by-one in the same order as they provided.
   SimpleValues(Vec<Value>),
+  /// Named query values. During query execution a DB server will use
+  /// such values for entities which have the same name in a DB scheme.
   NamedValues(HashMap<String, Value>),
 }
 

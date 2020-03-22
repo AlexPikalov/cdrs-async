@@ -7,6 +7,7 @@ use cassandra_proto::{
   query::{QueryParams, QueryParamsBuilder, QueryValues},
 };
 
+/// Traits that provides methods for immediate query execution.
 #[async_trait]
 pub trait QueryExecutor: Send {
   async fn query_with_params_tw<Q: ToString + Send>(

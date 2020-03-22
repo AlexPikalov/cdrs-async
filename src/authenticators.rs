@@ -1,19 +1,27 @@
 use cassandra_proto::types::CBytes;
 
+/// Generic CDRS authenticator structure.
 pub struct Authenticator {
   cassandra_name: Option<String>,
   auth_token: CBytes,
 }
 
 impl Authenticator {
+  /// Returns authentication token wich will be used
+  /// by a DB server for session authorisation.
   pub fn get_auth_token(&self) -> CBytes {
     self.auth_token.clone()
   }
+
+  /// Returns authentication method name. CDRS will use it
+  /// to match with a method requested by a DB server.
   pub fn get_cassandra_name(&self) -> Option<String> {
     self.cassandra_name.clone()
   }
 }
 
+/// Password authenticator. CDRS will use it if a DB server requested
+/// `org.apache.cassandra.auth.PasswordAuthenticator` authentication.
 #[derive(Debug, Clone)]
 pub struct PasswordAuthenticator {
   username: String,
@@ -47,6 +55,8 @@ impl Into<Authenticator> for PasswordAuthenticator {
   }
 }
 
+/// Authenticator which can be used if a DB server
+/// has authentication disabled.
 #[derive(Debug, Clone)]
 pub struct NoneAuthenticator;
 

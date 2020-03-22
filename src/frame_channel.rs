@@ -16,6 +16,7 @@ use crate::{compressor::Compression, transport::CDRSTransport};
 
 const READING_BUFFER_SIZE: usize = 1_000;
 
+/// Async channel that enable frame exchange with DB server.
 pub struct FrameChannel<T> {
   transport: T,
   sending_buffer: Vec<u8>,

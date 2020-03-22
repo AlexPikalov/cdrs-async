@@ -3,8 +3,12 @@ use async_trait::async_trait;
 
 use cassandra_proto::{error, types::CBytesShort};
 
+/// Id of a prepared query. This Id can be used for
+/// query execution and/or query batching.
 pub type PreparedQuery = CBytesShort;
 
+/// Traits that provides methods for preparing queries
+/// on a DB server.
 #[async_trait]
 pub trait PrepareExecutor {
   /// It prepares a query for execution, along with query itself

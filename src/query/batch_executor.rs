@@ -3,6 +3,8 @@ use std::pin::Pin;
 use async_trait::async_trait;
 use cassandra_proto::{error, frame::Frame, query::QueryBatch};
 
+/// Traits that provides methods for sending multiple queries
+/// to a DB server.
 #[async_trait]
 pub trait BatchExecutor: Send {
   async fn batch_with_params_tw(

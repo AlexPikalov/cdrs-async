@@ -21,6 +21,7 @@ mod utils;
 
 // pub mod load_balancer;
 
+pub use cassandra_proto::compression::Compressor;
 pub use compressor::Compression;
 pub use session::Session;
 pub use transport::CDRSTransport;

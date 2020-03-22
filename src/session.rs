@@ -27,6 +27,7 @@ use crate::{
 
 type StreamId = u16;
 
+/// Session structure which allows clients making requests to a server.
 pub struct Session<T> {
   channel: FrameChannel<T>,
   responses: HashMap<StreamId, Frame>,

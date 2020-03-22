@@ -14,7 +14,7 @@ use async_trait::async_trait;
 
 use super::transport::CDRSTransport;
 
-/// Default Tcp transport.
+/// CDRS TCP transport.
 pub struct TransportTcp {
   tcp: net::TcpStream,
   _addr: String,
