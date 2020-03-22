@@ -5,6 +5,7 @@ use async_std::future::poll_fn;
 use async_std::pin::Pin;
 use async_std::prelude::*;
 use async_std::task::{Context, Poll};
+use async_tls::TlsConnector;
 
 use futures::stream::Stream;
 
@@ -20,14 +21,15 @@ use crate::{
   compressor::Compression,
   frame_channel::FrameChannel,
   query::{BatchExecutor, ExecExecutor, PrepareExecutor, PreparedQuery, QueryExecutor},
-  transport_tcp::TransportTcp,
+  transport::CDRSTransport,
   utils::prepare_flags,
+  TransportTcp, TransportTls,
 };
 
 type StreamId = u16;
 
-pub struct Session {
-  channel: FrameChannel<TransportTcp>,
+pub struct Session<T> {
+  channel: FrameChannel<T>,
   responses: HashMap<StreamId, Frame>,
   authenticator: Authenticator,
 }
@@ -55,7 +57,7 @@ macro_rules! receive_frame {
   };
 }
 
-impl Session {
+impl Session<TransportTcp> {
   pub async fn connect<Addr: ToString>(
     addr: Addr,
     compressor: Compression,
@@ -75,7 +77,31 @@ impl Session {
 
     Ok(session)
   }
+}
 
+impl Session<TransportTls> {
+  pub async fn connect_tls<Addr: ToString>(
+    (addr, connector): (Addr, TlsConnector),
+    compressor: Compression,
+    authenticator: Authenticator,
+  ) -> error::Result<Self> {
+    let transport = TransportTls::new(&addr.to_string(), connector).await?;
+    let channel = FrameChannel::new(transport, compressor);
+    let responses = HashMap::new();
+
+    let mut session = Session {
+      channel,
+      responses,
+      authenticator,
+    };
+
+    session.startup().await?;
+
+    Ok(session)
+  }
+}
+
+impl<T: CDRSTransport> Session<T> {
   async fn startup(&mut self) -> error::Result<()> {
     let ref mut compression = Compression::None;
     let startup_frame = Frame::new_req_startup(compression.as_str());
@@ -133,7 +159,7 @@ impl Session {
           .get_auth_token()
           .into_plain()
           .ok_or(error::Error::from(
-            "Authentication error: cannot get auth tocken",
+            "Authentication error: cannot get auth token",
           ))?;
       let auth_response = Frame::new_req_auth_response(auth_token_bytes);
       let response_stream = auth_response.stream;
@@ -149,7 +175,7 @@ impl Session {
 }
 
 #[async_trait]
-impl QueryExecutor for Session {
+impl<T: CDRSTransport> QueryExecutor for Session<T> {
   async fn query_with_params_tw<Q: ToString + Send>(
     mut self: Pin<&mut Self>,
     query: Q,
@@ -173,7 +199,7 @@ impl QueryExecutor for Session {
 }
 
 #[async_trait]
-impl PrepareExecutor for Session {
+impl<T: CDRSTransport> PrepareExecutor for Session<T> {
   async fn prepare_tw<Q: ToString + Send>(
     mut self: Pin<&mut Self>,
     query: Q,
@@ -201,7 +227,7 @@ impl PrepareExecutor for Session {
 }
 
 #[async_trait]
-impl ExecExecutor for Session {
+impl<T: CDRSTransport> ExecExecutor for Session<T> {
   async fn exec_with_params_tw(
     mut self: Pin<&mut Self>,
     prepared: &PreparedQuery,
@@ -219,7 +245,7 @@ impl ExecExecutor for Session {
 }
 
 #[async_trait]
-impl BatchExecutor for Session {
+impl<T: CDRSTransport> BatchExecutor for Session<T> {
   async fn batch_with_params_tw(
     mut self: Pin<&mut Self>,
     batch: QueryBatch,
