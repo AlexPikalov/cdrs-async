@@ -1,6 +1,3 @@
-#[cfg(feature = "ssl")]
-use openssl::ssl::{SslConnector, SslStream};
-
 use {
   async_trait::async_trait,
   std::{io, marker::Unpin, net},

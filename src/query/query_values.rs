@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::hash::Hash;
+use std::{collections::HashMap, hash::Hash};
 
 use cassandra_proto::{frame::IntoBytes, types::value::Value, types::CString};
 

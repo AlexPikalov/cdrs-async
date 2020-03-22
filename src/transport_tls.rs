@@ -1,13 +1,15 @@
-// use std::net;
-use std::io::{IoSlice, IoSliceMut};
-use std::marker::Unpin;
-use std::task::Poll;
+use std::{
+  io::{IoSlice, IoSliceMut},
+  marker::Unpin,
+  task::{Context, Poll},
+};
 
-use async_std::io;
-use async_std::io::{Read, Write};
-use async_std::net;
-use async_std::pin::Pin;
-use async_std::task::Context;
+use async_std::{
+  io,
+  io::{Read, Write},
+  net,
+  pin::Pin,
+};
 use async_tls::{client::TlsStream, TlsConnector};
 use async_trait::async_trait;
 

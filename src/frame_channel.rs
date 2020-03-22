@@ -1,16 +1,15 @@
-use std::io;
-use std::pin::Pin;
+use std::{
+  io,
+  pin::Pin,
+  task::{Context, Poll},
+};
 
 use async_std::{
   io::{IoSlice, Write},
   prelude::*,
 };
 use cassandra_proto::frame::{parser_async::parse_frame_async, Frame, IntoBytes};
-use futures::{
-  sink::Sink,
-  stream::Stream,
-  task::{Context, Poll},
-};
+use futures::{sink::Sink, stream::Stream};
 use log::error;
 
 use crate::{compressor::Compression, transport::CDRSTransport};

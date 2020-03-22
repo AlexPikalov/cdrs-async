@@ -8,11 +8,7 @@
 //!by the server, messages can be compressed (including the response to the STARTUP
 //!request).
 
-use std::convert::From;
-use std::error::Error;
-use std::fmt;
-use std::io;
-use std::result;
+use std::{convert::From, error::Error, fmt, io, result};
 
 use cassandra_proto::compression::Compressor;
 use lz4_compress as lz4;

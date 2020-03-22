@@ -1,19 +1,18 @@
-use std::collections::HashMap;
-use std::io;
+use std::{
+  collections::HashMap,
+  io,
+  pin::Pin,
+  task::{Context, Poll},
+};
 
-use async_std::future::poll_fn;
-use async_std::pin::Pin;
-use async_std::prelude::*;
-use async_std::task::{Context, Poll};
+use async_std::{future::poll_fn, prelude::*};
 use async_tls::TlsConnector;
-
-use futures::stream::Stream;
-
 use cassandra_proto::{
   error,
   frame::{parser_async::convert_frame_into_result, Frame, IntoBytes, Opcode},
   query::{Query, QueryBatch, QueryParams},
 };
+use futures::stream::Stream;
 
 use crate::{
   async_trait::async_trait,
