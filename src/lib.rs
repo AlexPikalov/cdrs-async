@@ -19,8 +19,6 @@ mod transport_tcp;
 mod transport_tls;
 mod utils;
 
-// pub mod load_balancer;
-
 pub use cassandra_proto::compression::Compressor;
 pub use compressor::Compression;
 pub use session::Session;
