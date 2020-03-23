@@ -22,14 +22,6 @@ pub struct TransportTcp {
 
 impl TransportTcp {
   /// Constructs a new `TransportTcp`.
-  ///
-  /// # Examples
-  ///
-  /// ```no_run
-  /// use cdrs::transport::TransportTcp;
-  /// let addr = "127.0.0.1:9042";
-  /// let tcp_transport = TransportTcp::new(addr).unwrap();
-  /// ```
   pub async fn new(addr: &str) -> io::Result<TransportTcp> {
     net::TcpStream::connect(addr)
       .await

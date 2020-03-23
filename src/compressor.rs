@@ -49,35 +49,6 @@ impl Error for CompressionError {
 }
 
 /// Enum which represents a type of compression. Only non-startup frame's body can be compressed.
-///
-/// It encodes `bytes` basing on type of `Compression`.
-///
-/// # Examples
-///
-/// ```
-///   use cdrs::compression::Compression;
-///
-///   let snappy_compression = Compression::Snappy;
-///   let bytes = String::from("Hello World").into_bytes().to_vec();
-///   let encoded = snappy_compression.encode(bytes.clone()).unwrap();
-///   assert_eq!(snappy_compression.decode(encoded).unwrap(), bytes);
-///
-/// ```
-///
-/// It decodes `bytes` basing on type of compression.
-///
-/// # Examples
-///
-/// ```
-///    use cdrs::compression::Compression;
-///    let lz4_compression = Compression::Lz4;
-///    let bytes = String::from("Hello World").into_bytes().to_vec();
-///    let encoded = lz4_compression.encode(bytes.clone()).unwrap();
-///    let len = encoded.len() as u8;
-///    let mut input = vec![0, 0, 0, len];
-///    input.extend_from_slice(encoded.as_slice());
-///    assert_eq!(lz4_compression.decode(input).unwrap(), bytes);
-/// ```
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Ord, PartialOrd)]
 pub enum Compression {
   /// [lz4](https://code.google.com/p/lz4/) compression.

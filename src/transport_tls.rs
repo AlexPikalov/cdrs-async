@@ -25,14 +25,6 @@ pub struct TransportTls {
 
 impl TransportTls {
   /// Constructs a new `TransportTcp`.
-  ///
-  /// # Examples
-  ///
-  /// ```no_run
-  /// use cdrs::transport::TransportTls;
-  /// let addr = "127.0.0.1:9042";
-  /// let tcp_transport = TransportTls::new(addr).unwrap();
-  /// ```
   pub async fn new(addr: &str, connector: TlsConnector) -> io::Result<TransportTls> {
     let tcp_stream = net::TcpStream::connect(addr).await?;
     let stream = connector.connect(addr, tcp_stream)?.await?;
