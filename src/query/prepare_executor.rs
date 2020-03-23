@@ -1,6 +1,6 @@
-use async_std::pin::Pin;
-use async_trait::async_trait;
+use std::pin::Pin;
 
+use async_trait::async_trait;
 use cassandra_proto::{error, types::CBytesShort};
 
 /// Id of a prepared query. This Id can be used for

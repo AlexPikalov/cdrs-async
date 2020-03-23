@@ -1,6 +1,7 @@
 use std::{
   io::{IoSlice, IoSliceMut},
   marker::Unpin,
+  pin::Pin,
   task::{Context, Poll},
 };
 
@@ -8,7 +9,6 @@ use async_std::{
   io,
   io::{Read, Write},
   net,
-  pin::Pin,
 };
 use async_tls::{client::TlsStream, TlsConnector};
 use async_trait::async_trait;

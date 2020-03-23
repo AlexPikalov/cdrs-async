@@ -2,9 +2,9 @@ extern crate async_std;
 extern crate async_trait;
 extern crate cdrs_async;
 
-use async_std::pin::Pin;
-use async_std::task;
+use std::pin::Pin;
 
+use async_std::task;
 use cdrs_async::{authenticators::NoneAuthenticator, query::QueryExecutor, Compression, Session};
 
 const CREATE_KS_QUERY: &'static str = r#"
