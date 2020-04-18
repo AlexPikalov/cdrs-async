@@ -13,6 +13,7 @@ pub mod query;
 pub(crate) mod frame_channel;
 
 mod compressor;
+mod pager;
 mod session;
 mod transport;
 mod transport_tcp;
@@ -21,6 +22,7 @@ mod utils;
 
 pub use cassandra_proto::compression::Compressor;
 pub use compressor::Compression;
+pub use pager::PageSize;
 pub use session::Session;
 pub use transport::CDRSTransport;
 pub use transport_tcp::TransportTcp;

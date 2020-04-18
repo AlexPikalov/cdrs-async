@@ -19,6 +19,7 @@ use crate::{
   authenticators::Authenticator,
   compressor::Compression,
   frame_channel::FrameChannel,
+  pager::{PageSize, SessionPager},
   query::{BatchExecutor, ExecExecutor, PrepareExecutor, PreparedQuery, QueryExecutor},
   transport::CDRSTransport,
   utils::prepare_flags,
@@ -76,6 +77,11 @@ impl Session<TransportTcp> {
     session.startup().await?;
 
     Ok(session)
+  }
+
+  /// Converts `Session` into `SessionPager`
+  pub fn into_pager(self, page_size: PageSize) -> SessionPager<TransportTcp> {
+    SessionPager::new(self, page_size)
   }
 }
 
