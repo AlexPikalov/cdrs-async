@@ -19,3 +19,6 @@ async-trait = "0.1.21"
 
 cassandra-proto = "0.1.2"
 log = "0.4"
+
+[dev-dependencies]
+speculate = "0.1"

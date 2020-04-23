@@ -1,0 +1,26 @@
+dist: trusty
+language: rust
+rust:
+  - stable
+  - beta
+services:
+  - cassandra
+sudo: required
+
+install:
+  - PATH=$PATH:/home/travis/.cargo/bin
+
+before_script:
+  - rustup component add rustfmt
+
+script:
+  - cargo build --verbose
+  - cargo test --verbose --no-fail-fast
+# deploy:
+#   # deploy master to production
+#   - provider: script
+#     skip_cleanup: true
+#     script: cargo publish --token $CARGO_CREDS
+#     on:
+#       tags: true
+#       branch: master
