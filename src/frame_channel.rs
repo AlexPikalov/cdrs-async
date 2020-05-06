@@ -5,12 +5,7 @@ use std::{
 };
 
 use cassandra_proto::frame::{parser_async::parse_frame_async, Frame, IntoBytes};
-use futures::{
-    io::{AsyncWriteExt, IoSlice},
-    sink::Sink,
-    stream::Stream,
-    AsyncWrite,
-};
+use futures::{io::IoSlice, sink::Sink, stream::Stream, AsyncWrite};
 use log::error;
 
 use crate::{compressor::Compression, transport::CDRSTransport};
@@ -57,14 +52,10 @@ impl<T: CDRSTransport> Sink<Frame> for FrameChannel<T> {
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         let buff = self.sending_buffer.split_off(0);
-        let mut transport = Pin::new(&mut self.transport);
-
-        // TODO: check this
-        transport.write(&buff);
-        println!("before poll flushing");
-        let p = transport.poll_flush(cx);
-
-        p
+        match Pin::new(&mut self.transport).poll_write(cx, &buff) {
+            Poll::Ready(_) => Pin::new(&mut self.transport).poll_flush(cx),
+            Poll::Pending => Poll::Pending,
+        }
     }
 
     fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
