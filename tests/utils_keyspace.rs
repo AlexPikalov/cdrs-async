@@ -15,15 +15,15 @@ pub const DROP_KS_QUERY: &'static str = r#"
   "#;
 
 pub async fn create_keyspace(executor: Pin<&mut impl QueryExecutor>) {
-  executor
-    .query(CREATE_KS_QUERY)
-    .await
-    .expect("should create test_keyspace");
+    executor
+        .query(CREATE_KS_QUERY)
+        .await
+        .expect("should create test_keyspace");
 }
 
 pub async fn drop_keyspace(executor: Pin<&mut impl QueryExecutor>) {
-  executor
-    .query(DROP_KS_QUERY)
-    .await
-    .expect("should drop test_keyspace");
+    executor
+        .query(DROP_KS_QUERY)
+        .await
+        .expect("should drop test_keyspace");
 }

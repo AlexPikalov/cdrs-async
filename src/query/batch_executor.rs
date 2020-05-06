@@ -7,14 +7,17 @@ use cassandra_proto::{error, frame::Frame, query::QueryBatch};
 /// to a DB server.
 #[async_trait]
 pub trait BatchExecutor: Send {
-  async fn batch_with_params_tw(
-    mut self: Pin<&mut Self>,
-    batch: QueryBatch,
-    with_tracing: bool,
-    with_warnings: bool,
-  ) -> error::Result<Frame>;
+    async fn batch_with_params_tw(
+        mut self: Pin<&mut Self>,
+        batch: QueryBatch,
+        with_tracing: bool,
+        with_warnings: bool,
+    ) -> error::Result<Frame>;
 
-  async fn batch_with_params(mut self: Pin<&mut Self>, batch: QueryBatch) -> error::Result<Frame> {
-    self.batch_with_params_tw(batch, false, false).await
-  }
+    async fn batch_with_params(
+        mut self: Pin<&mut Self>,
+        batch: QueryBatch,
+    ) -> error::Result<Frame> {
+        self.batch_with_params_tw(batch, false, false).await
+    }
 }

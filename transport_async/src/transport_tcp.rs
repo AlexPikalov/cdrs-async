@@ -10,40 +10,37 @@ use async_std::{
   io::{Read, Write},
   net,
 };
-use async_tls::{client::TlsStream, TlsConnector};
 use async_trait::async_trait;
 
-use super::transport::CDRSTransport;
+use transport::CDRSTransport;
 
-pub type Stream = TlsStream<net::TcpStream>;
-
-/// CDRS TLS transport.
-pub struct TransportTls {
-  stream: Stream,
+/// CDRS TCP transport.
+pub struct TransportTcp {
+  tcp: net::TcpStream,
   _addr: String,
 }
 
-impl TransportTls {
+impl TransportTcp {
   /// Constructs a new `TransportTcp`.
-  pub async fn new(addr: &str, connector: TlsConnector) -> io::Result<TransportTls> {
-    let tcp_stream = net::TcpStream::connect(addr).await?;
-    let stream = connector.connect(addr, tcp_stream)?.await?;
-    Ok(TransportTls {
-      stream,
-      _addr: addr.to_string(),
-    })
+  pub async fn new(addr: &str) -> io::Result<TransportTcp> {
+    net::TcpStream::connect(addr)
+      .await
+      .map(|socket| TransportTcp {
+        tcp: socket,
+        _addr: addr.to_string(),
+      })
   }
 }
 
-impl Unpin for TransportTls {}
+impl Unpin for TransportTcp {}
 
-impl Read for TransportTls {
+impl Read for TransportTcp {
   fn poll_read(
     mut self: Pin<&mut Self>,
     cx: &mut Context,
     buf: &mut [u8],
   ) -> Poll<io::Result<usize>> {
-    Pin::new(&mut self.stream).poll_read(cx, buf)
+    Pin::new(&mut self.tcp).poll_read(cx, buf)
   }
 
   fn poll_read_vectored(
@@ -51,17 +48,17 @@ impl Read for TransportTls {
     cx: &mut Context<'_>,
     bufs: &mut [IoSliceMut<'_>],
   ) -> Poll<io::Result<usize>> {
-    Pin::new(&mut self.stream).poll_read_vectored(cx, bufs)
+    Pin::new(&mut self.tcp).poll_read_vectored(cx, bufs)
   }
 }
 
-impl Write for TransportTls {
+impl Write for TransportTcp {
   fn poll_write(
     mut self: Pin<&mut Self>,
     cx: &mut Context<'_>,
     buf: &[u8],
   ) -> Poll<io::Result<usize>> {
-    Pin::new(&mut self.stream).poll_write(cx, buf)
+    Pin::new(&mut self.tcp).poll_write(cx, buf)
   }
 
   fn poll_write_vectored(
@@ -69,31 +66,35 @@ impl Write for TransportTls {
     cx: &mut Context<'_>,
     bufs: &[IoSlice<'_>],
   ) -> Poll<io::Result<usize>> {
-    Pin::new(&mut self.stream).poll_write_vectored(cx, bufs)
+    Pin::new(&mut self.tcp).poll_write_vectored(cx, bufs)
   }
 
   fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-    Pin::new(&mut self.stream).poll_flush(cx)
+    Pin::new(&mut self.tcp).poll_flush(cx)
   }
 
   fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-    Pin::new(&mut self.stream).poll_close(cx)
+    Pin::new(&mut self.tcp).poll_close(cx)
   }
 }
 
 #[async_trait]
-impl CDRSTransport for TransportTls {
+impl CDRSTransport for TransportTcp {
   // FIXME:
-  // async fn try_clone(&self) -> io::Result<TransportTls> {
-  //   // TODO:
-  //   todo!()
+  // async fn try_clone(&self) -> io::Result<TransportTcp> {
+  //   net::TcpStream::connect(self.addr.as_str())
+  //     .await
+  //     .map(|socket| TransportTcp {
+  //       tcp: socket,
+  //       addr: self.addr.clone(),
+  //     })
   // }
 
   fn close(&mut self, close: net::Shutdown) -> io::Result<()> {
-    self.stream.get_mut().shutdown(close)
+    self.tcp.shutdown(close)
   }
 
   fn is_alive(&self) -> bool {
-    self.stream.get_ref().peer_addr().is_ok()
+    self.tcp.peer_addr().is_ok()
   }
 }
