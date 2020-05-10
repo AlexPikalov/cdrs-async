@@ -32,46 +32,51 @@ speculate! {
       utils_bootstrap::bootstrap();
     }
 
-    it "should create and remove a table" {
-      task::block_on(async {
+    async fn test() {
         let mut session = utils_session::connect_tcp().await;
         // create a new keyspace
         utils_keyspace::create_keyspace(Pin::new(&mut session)).await;
-
+    
         // create a new table
         Pin::new(&mut session)
-          .query(CREATE_TABLE_QUERY)
-          .await
-          .expect("could not create a table");
-
+            .query(CREATE_TABLE_QUERY)
+            .await
+            .expect("could not create a table");
+    
         // select an info about a table
         let keyspaces = Pin::new(&mut session)
-          .query(GET_TABLE_INFO_QUERY)
-          .await
-          .expect("could not select table info")
-          .get_body()
-          .expect("could not obtain body from a response")
-          .into_rows()
-          .expect("could not get rows from a response");
+            .query(GET_TABLE_INFO_QUERY)
+            .await
+            .expect("could not select table info")
+            .get_body()
+            .expect("could not obtain body from a response")
+            .into_rows()
+            .expect("could not get rows from a response");
         assert_eq!(keyspaces.len(), 1, "should create a table");
-
+    
         // drop a table
         Pin::new(&mut session)
-          .query(DROP_TABLE_QUERY)
-          .await
-          .expect("could not drop a table");
-
-          // select an info about a table
+            .query(DROP_TABLE_QUERY)
+            .await
+            .expect("could not drop a table");
+    
+            // select an info about a table
         let keyspaces = Pin::new(&mut session)
-          .query(GET_TABLE_INFO_QUERY)
-          .await
-          .expect("could not select table info")
-          .get_body()
-          .expect("could not obtain body from a response")
-          .into_rows()
-          .expect("could not get rows from a response");
+            .query(GET_TABLE_INFO_QUERY)
+            .await
+            .expect("could not select table info")
+            .get_body()
+            .expect("could not obtain body from a response")
+            .into_rows()
+            .expect("could not get rows from a response");
         assert_eq!(keyspaces.len(), 0, "should drop a table");
-      });
+    }
+
+    it "async_std: should create and remove a table" {
+      task::block_on(test());
+    }
+    it "tokio: should create and remove a table" {
+      tokio::task::spawn(test());
     }
   }
 }
