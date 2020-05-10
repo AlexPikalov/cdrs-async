@@ -31,6 +31,8 @@ Add CDRS-async to your Cargo.toml file as a dependency:
 ```toml
 cdrs-async = { version = "*" }
 ```
+The library supports both `tokio` and `async_std` by default. You can enable and disable them through the features `async_std`, `tok_io` and `no_runtime`. If you wish to use a different runtime, you have to implement the trait `CDRSTransport` and pass an object of this type to the session.
+
 
 Then add it as an external crate to your `main.rs` file:
 
@@ -40,7 +42,7 @@ extern crate async_trait;
 extern crate cdrs_async;
 
 use async_std::{pin::Pin, task};
-use cdrs_async::{authenticators::NoneAuthenticator, query::QueryExecutor, Compression, Session};
+use cdrs_async::{authenticators::NoneAuthenticator, query::QueryExecutor, Compression, Session, transport::async_std::TransportTcp};
 
 const CREATE_KS_QUERY: &'static str = r#"
   CREATE KEYSPACE IF NOT EXISTS async_cdrs_3
@@ -53,8 +55,11 @@ const CREATE_KS_QUERY: &'static str = r#"
 fn main() {
   task::block_on(async {
     let authenticator_strategy = NoneAuthenticator {};
+    let transport = TransportTcp::new("127.0.0.1:9042")
+      .await
+      .expect("Cannot create transport");
     let mut session = Session::connect(
-      "127.0.0.1:9042",
+      transport,
       Compression::None,
       authenticator_strategy.into(),
     )
