@@ -10,6 +10,7 @@ mod utils_session;
 use std::pin::Pin;
 
 use async_std::task;
+use tokio::runtime::Runtime;
 
 use cdrs_async::query::QueryExecutor;
 use utils_bootstrap::bootstrap;
@@ -79,7 +80,8 @@ speculate! {
     }
 
     it "tokio: should create and remove a new keyspace" {
-      tokio::task::spawn(test());
+      let mut rt = Runtime::new().expect("Cannot start tokio runtime");
+      rt.block_on(test());
     }
   }
 }

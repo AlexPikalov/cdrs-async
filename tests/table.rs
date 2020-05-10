@@ -8,6 +8,7 @@ mod utils_keyspace;
 mod utils_session;
 
 use async_std::task;
+use tokio::runtime::Runtime;
 use std::pin::Pin;
 
 use cdrs_async::query::QueryExecutor;
@@ -76,7 +77,8 @@ speculate! {
       task::block_on(test());
     }
     it "tokio: should create and remove a table" {
-      tokio::task::spawn(test());
+      let mut rt = Runtime::new().expect("Cannot start tokio runtime");
+      rt.block_on(test());
     }
   }
 }
