@@ -1,4 +1,4 @@
-use cdrs_async::{authenticators::NoneAuthenticator, Compression, Session, TransportTcp};
+use cdrs_async::{authenticators::NoneAuthenticator, Compression, Session, transport::async_std::TransportTcp};
 
 pub async fn connect_tcp() -> Session<TransportTcp> {
     let authenticator_strategy = NoneAuthenticator {};
