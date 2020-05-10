@@ -8,17 +8,25 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/AlexPikalov/cdrs-async"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["async_std", "tok_io"]
+async_std = ["transport_async"]
+tok_io = ["transport_tokio"]
+no_runtime = []
 
 [dependencies]
-async-std = { version = "1.4.0" }
-async-tls = "0.6"
-futures = {version = "0.3.1", features = ["thread-pool"]}
+futures = {version = "0.3.5", features = ["thread-pool"]}
 lz4-compress = "=0.1.0"
-snap = "0.2.3"
-async-trait = "0.1.21"
+snap = "1.0"
+async-trait = "0.1.30"
+transport = {path = "./transport"}
+transport_async = {path = "./transport_async", optional = true}
+transport_tokio = {path = "./transport_tokio", optional = true}
 
 cassandra-proto = "0.1.2"
 log = "0.4"
 
 [dev-dependencies]
 speculate = "0.1"
+async-std = "1.5.0"
+tokio = { version = "0.2", features = ["full"] }

@@ -1,0 +1,11 @@
+[package]
+name = "transport"
+version = "1.0.0"
+authors = ["Alex Pikalov <alex.pikalov.khar@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+futures = "0.3.5"
+async-trait = "0.1.30"

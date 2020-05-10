@@ -1,0 +1,15 @@
+[package]
+name = "transport_tokio"
+version = "0.1.0"
+authors = ["Alex Pikalov <alex.pikalov.khar@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+transport = { path = "../transport"}
+tokio = { version = "0.2", features = ["tcp", "net", "stream", "io-util"] }
+tokio-native-tls = "0.1"
+native-tls = "0.2"
+futures = "0.3.5"
+async-trait = "0.1.30"

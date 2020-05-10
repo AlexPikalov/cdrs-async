@@ -10,6 +10,7 @@ mod utils_session;
 use std::pin::Pin;
 
 use async_std::task;
+use tokio::runtime::Runtime;
 
 use cdrs_async::query::QueryExecutor;
 use utils_bootstrap::bootstrap;
@@ -26,8 +27,7 @@ speculate! {
       bootstrap();
     }
 
-    it "should create a new keyspace" {
-      task::block_on(async {
+    async fn test() {
         let mut session = connect_tcp().await;
         // create a new keyspace
         utils_keyspace::create_keyspace(Pin::new(&mut session)).await;
@@ -40,11 +40,8 @@ speculate! {
           .expect("could not obtain body from a response")
           .into_rows()
           .expect("could not get rows from a response");
-        assert_eq!(keyspaces.len(), 1, "should create a keyspace");});
-    }
+        assert_eq!(keyspaces.len(), 1, "should create a keyspace");
 
-    it "should remove a keyspace" {
-      task::block_on(async {
         let mut session = connect_tcp().await;
 
         // create a new keyspace
@@ -76,7 +73,15 @@ speculate! {
           .expect("could not get rows from a response");
 
         assert_eq!(keyspaces.len(), 0, "should create a keyspace");
-      });
+    }
+
+    it "async_std: should create and remove a new keyspace" {
+      task::block_on(test());
+    }
+
+    it "tokio: should create and remove a new keyspace" {
+      let mut rt = Runtime::new().expect("Cannot start tokio runtime");
+      rt.block_on(test());
     }
   }
 }
