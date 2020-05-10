@@ -7,7 +7,7 @@ extern crate snap;
 extern crate transport as cdrs_transport;
 #[cfg(feature = "async_std")]
 extern crate transport_async;
-#[cfg(feature = "tokio")]
+#[cfg(feature = "tok_io")]
 extern crate transport_tokio;
 
 pub mod authenticators;
@@ -26,7 +26,7 @@ pub use pager::PageSize;
 pub use session::Session;
 pub mod transport {
     pub use cdrs_transport::CDRSTransport;
-    #[cfg(feature = "tokio")]
+    #[cfg(feature = "tok_io")]
     pub mod tokio {
         pub use transport_tokio::TransportTcp;
         pub use transport_tokio::TransportTls;
