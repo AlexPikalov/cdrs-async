@@ -11,15 +11,17 @@ repository = "https://github.com/AlexPikalov/cdrs-async"
 [features]
 default = ["async_std"]
 async_std = ["transport_async"]
+tokio = ["transport_tokio"]
 no_runtime = []
 
 [dependencies]
-futures = {version = "0.3.4", features = ["thread-pool"]}
+futures = {version = "0.3.5", features = ["thread-pool"]}
 lz4-compress = "=0.1.0"
 snap = "1.0"
 async-trait = "0.1.30"
 transport = {path = "./transport"}
 transport_async = {path = "./transport_async", optional = true}
+transport_tokio = {path = "./transport_tokio", optional = true}
 
 cassandra-proto = "0.1.2"
 log = "0.4"
