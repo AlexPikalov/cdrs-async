@@ -6,7 +6,7 @@ use std::pin::Pin;
 
 use async_std::task;
 use cdrs_async::{
-    authenticators::NoneAuthenticator, query::QueryExecutor, Compression, Session, TransportTcp,
+    authenticators::NoneAuthenticator, query::QueryExecutor, Compression, Session, transport::async_std::TransportTcp,
 };
 
 const CREATE_KS_QUERY: &'static str = r#"
