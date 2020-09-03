@@ -14,10 +14,6 @@ use cdrs_async::query::QueryExecutor;
 
 speculate! {
   describe "table" {
-    const CREATE_TABLE_QUERY: &'static str = r#"
-      CREATE TABLE test_keyspace.test_table (key blob PRIMARY KEY, value blob);
-    "#;
-
     const GET_TABLE_INFO_QUERY: &'static str = r#"
       SELECT * from system_schema.tables
         WHERE keyspace_name = 'test_keyspace'
@@ -39,10 +35,7 @@ speculate! {
         utils_keyspace::create_keyspace(Pin::new(&mut session)).await;
 
         // create a new table
-        Pin::new(&mut session)
-          .query(CREATE_TABLE_QUERY)
-          .await
-          .expect("could not create a table");
+        utils_keyspace::create_table(Pin::new(&mut session)).await;
 
         // select an info about a table
         let keyspaces = Pin::new(&mut session)

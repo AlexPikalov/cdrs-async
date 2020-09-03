@@ -14,6 +14,10 @@ pub const DROP_KS_QUERY: &'static str = r#"
   DROP KEYSPACE IF EXISTS test_keyspace;
   "#;
 
+const CREATE_TABLE_QUERY: &'static str = r#"
+  CREATE TABLE IF NOT EXISTS test_keyspace.test_table (key blob PRIMARY KEY, value blob);
+"#;
+
 pub async fn create_keyspace(executor: Pin<&mut impl QueryExecutor>) {
   executor
     .query(CREATE_KS_QUERY)
@@ -26,4 +30,11 @@ pub async fn drop_keyspace(executor: Pin<&mut impl QueryExecutor>) {
     .query(DROP_KS_QUERY)
     .await
     .expect("should drop test_keyspace");
+}
+
+pub async fn create_table(executor: Pin<&mut impl QueryExecutor>) {
+  executor
+    .query(CREATE_TABLE_QUERY)
+    .await
+    .expect("should create test_table");
 }
