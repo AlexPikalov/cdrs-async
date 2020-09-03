@@ -109,7 +109,8 @@ impl<T: CDRSTransport> Stream for FrameChannel<T> {
       Poll::Ready(result) => match result {
         Ok(n) => {
           self.receving_buffer.extend_from_slice(&buffer_slice[0..n]);
-          if n == READING_BUFFER_SIZE || n == 0 {
+          if n == READING_BUFFER_SIZE {
+//           if n == READING_BUFFER_SIZE || n == 0 {
 //             cx.waker().wake_by_ref();
             return Poll::Pending;
           } else {
