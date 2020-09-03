@@ -60,7 +60,6 @@ impl<T: CDRSTransport> Sink<Frame> for FrameChannel<T> {
     let mut transport = Pin::new(&mut self.transport);
 
     transport.write(&buff);
-    println!("before poll flushing");
     let p = transport.poll_flush(cx);
 
     p
@@ -119,12 +118,10 @@ impl<T: CDRSTransport> Stream for FrameChannel<T> {
         Err(err) => {
           error!("CDRS frame_channel: {:?}", err);
           self.is_terminated = true;
-          cx.waker().wake_by_ref();
           return Poll::Ready(None);
         }
       },
       Poll::Pending => {
-        cx.waker().wake_by_ref();
         return Poll::Pending;
       }
     }
@@ -135,7 +132,6 @@ impl<T: CDRSTransport> Stream for FrameChannel<T> {
       Err(err) => {
         error!("CDRS frame_channel: parse frame error {:?}", err);
         self.is_terminated = true;
-        cx.waker().wake_by_ref();
         return Poll::Ready(None);
       }
       Ok(Some(frame)) => {
@@ -144,11 +140,9 @@ impl<T: CDRSTransport> Stream for FrameChannel<T> {
           .into_inner()
           .split_off(cursor_position as usize);
 
-        cx.waker().wake_by_ref();
         return Poll::Ready(Some(frame));
       }
       Ok(None) => {
-        cx.waker().wake_by_ref();
         return Poll::Pending;
       }
     }
