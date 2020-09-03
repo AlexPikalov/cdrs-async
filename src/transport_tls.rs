@@ -24,10 +24,11 @@ pub struct TransportTls {
 }
 
 impl TransportTls {
-  /// Constructs a new `TransportTcp`.
+  /// Constructs a new `TransportTls`.
   pub async fn new(addr: &str, connector: TlsConnector) -> io::Result<TransportTls> {
     let tcp_stream = net::TcpStream::connect(addr).await?;
-    let stream = connector.connect(addr, tcp_stream)?.await?;
+    let domain = addr.split(':').next();
+    let stream = connector.connect(domain.unwrap_or(addr), tcp_stream)?.await?;
     Ok(TransportTls {
       stream,
       _addr: addr.to_string(),
