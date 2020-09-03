@@ -110,7 +110,7 @@ impl<T: CDRSTransport> Stream for FrameChannel<T> {
         Ok(n) => {
           self.receving_buffer.extend_from_slice(&buffer_slice[0..n]);
           if n == READING_BUFFER_SIZE || n == 0 {
-            cx.waker().wake_by_ref();
+//             cx.waker().wake_by_ref();
             return Poll::Pending;
           } else {
             // n < READING_BUFFER_SIZE means the function can proceed further
